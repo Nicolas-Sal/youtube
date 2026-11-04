@@ -4,16 +4,30 @@
 /*------------------------------------------------------------------------------
 4.5.1 UP NEXT AUTOPLAY
 ------------------------------------------------------------------------------*/
-ImprovedTube.playlistUpNextAutoplay = function () {
+ImprovedTube.isQueue = function (player) {
+	const playlist = player?.getPlaylist?.();
+	const listId = location.href.match(/[?&]list=([^&]+)/)?.[1];
+	return (!listId || listId.startsWith('TLPQ')) && Array.isArray(playlist) && playlist.length > 1;
+};
+
+ImprovedTube.playlistUpNextAutoplay = function (event) {
+	const player = this.elements.player || event?.target?.closest?.('.html5-video-player, #movie_player');
+
 	if (this.storage.playlist_up_next_autoplay === false) {
 		const playlistData = this.elements.ytd_watch?.playlistData;
-		if (this.getParam(location.href, 'list') && playlistData
-			&& playlistData.currentIndex
+		if (playlistData
+			&& playlistData.currentIndex != null
 			&& playlistData.totalVideos
-			&& playlistData.localCurrentIndex) {
+			&& playlistData.localCurrentIndex != null) {
 			// Prevent autoplay by telling YouTube we're at the end of the playlist
 			playlistData.currentIndex = playlistData.totalVideos;
 		}
+	}
+
+	if (event?.type === 'ended'
+		&& (this.storage.playlist_autoplay === false || this.storage.playlist_up_next_autoplay === false)
+		&& this.isQueue?.(player)) {
+		this.user_interacted = false;
 	}
 };
 
